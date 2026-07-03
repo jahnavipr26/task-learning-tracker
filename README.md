@@ -4,7 +4,7 @@ A simple app to track daily tasks and learning progress, built with Next.js, Nes
 
 ## Source Code
 
-Git repository: `https://github.com/YOUR_USERNAME/task-learning-tracker`
+Git repository: `https://github.com/jahnavipr26/task-learning-tracker`
 
 ## Tech Stack
 
