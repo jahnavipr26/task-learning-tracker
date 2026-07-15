@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
 import { LearningModule } from './learning/learning.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     TasksModule,
     LearningModule,
     DashboardModule,
+    ActivityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

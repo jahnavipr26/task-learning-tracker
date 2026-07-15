@@ -15,6 +15,23 @@ interface Task {
   createdAt: string;
 }
 
+// Converts "finish report" -> "Finish Report" for consistent display casing
+const toTitleCase = (text: string) =>
+  text
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+// "IN_PROGRESS" -> "In Progress"
+const formatLabel = (value: string) =>
+  value
+    .toLowerCase()
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
 export default function TasksPage() {
   const { isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
@@ -112,7 +129,7 @@ export default function TasksPage() {
 
   if (isLoading || tasksLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen font-sans">
         <p className="text-lg text-black">Loading...</p>
       </div>
     );
@@ -121,11 +138,11 @@ export default function TasksPage() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'HIGH':
-        return 'bg-red-100 text-red-800';
+        return 'bg-rose-100 text-rose-800';
       case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-100 text-amber-800';
       case 'LOW':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100 text-emerald-800';
       default:
         return 'bg-gray-100 text-black';
     }
@@ -134,7 +151,7 @@ export default function TasksPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100 text-emerald-800';
       case 'IN_PROGRESS':
         return 'bg-blue-100 text-blue-800';
       case 'PENDING':
@@ -145,81 +162,97 @@ export default function TasksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 font-sans antialiased">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-black">My Tasks</h2>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 font-semibold"
-          >
-            + New Task
-          </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-black tracking-tight">My Tasks</h2>
+          <p className="text-sm text-gray-500 mt-1">Keep track of what needs to get done.</p>
         </div>
 
-        <div className="space-y-4">
+        {/* Vertical, responsive card grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {tasks.length === 0 ? (
-            <div className="bg-white p-8 rounded-lg shadow text-center">
+            <div className="sm:col-span-2 xl:col-span-3 bg-white p-8 rounded-xl shadow text-center">
               <p className="text-black">No tasks yet. Create one to get started!</p>
             </div>
           ) : (
             tasks.map((task) => (
-              <div key={task.id} className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <input
-                        type="checkbox"
-                        checked={task.status === 'COMPLETED'}
-                        onChange={() => completeTask(task.id)}
-                        className="w-5 h-5"
-                      />
-                      <h3
-                        className={`text-xl font-semibold ${
-                          task.status === 'COMPLETED'
-                            ? 'line-through text-black'
-                            : 'text-black'
-                        }`}
-                      >
-                        {task.title}
-                      </h3>
-                    </div>
-                    {task.description && (
-                      <p className="text-black mb-3">{task.description}</p>
-                    )}
-                    <div className="flex gap-2 mb-3">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(task.status)}`}>
-                        {task.status}
-                      </span>
-                    </div>
-                    {task.dueDate && (
-                      <p className="text-sm text-black">
-                        Due: {new Date(task.dueDate).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => deleteTask(task.id)}
-                    className="text-red-600 hover:text-red-800 font-semibold"
+              <div
+                key={task.id}
+                className="relative flex flex-col bg-white rounded-xl shadow hover:shadow-lg transition p-5 sm:p-6"
+              >
+                {/* Delete as a small icon button, top-right corner */}
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  aria-label="Delete task"
+                  className="absolute top-4 right-4 text-gray-400 hover:text-rose-600 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0-1 13a2 2 0 01-2 2H9a2 2 0 01-2-2L6 7h12z" />
+                  </svg>
+                </button>
+
+                {/* Title row with checkbox */}
+                <div className="flex items-start gap-3 mb-2 pr-6">
+                  <input
+                    type="checkbox"
+                    checked={task.status === 'COMPLETED'}
+                    onChange={() => completeTask(task.id)}
+                    className="w-5 h-5 mt-0.5 accent-blue-600 shrink-0"
+                  />
+                  <h3
+                    className={`text-lg sm:text-xl font-semibold leading-snug ${
+                      task.status === 'COMPLETED' ? 'line-through text-gray-400' : 'text-black'
+                    }`}
                   >
-                    Delete
-                  </button>
+                    {toTitleCase(task.title)}
+                  </h3>
                 </div>
+
+                {task.description && (
+                  <p className="text-black text-sm mb-3">{task.description}</p>
+                )}
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(task.priority)}`}>
+                    {formatLabel(task.priority)}
+                  </span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(task.status)}`}>
+                    {formatLabel(task.status)}
+                  </span>
+                </div>
+
+                {task.dueDate && (
+                  <p className="text-xs text-gray-500 mt-auto pt-2">
+                    Due: {new Date(task.dueDate).toLocaleDateString()}
+                  </p>
+                )}
               </div>
             ))
           )}
         </div>
       </div>
 
+      {/* Floating action button replaces the inline "+ New Task" button */}
+      <button
+        onClick={() => setShowCreateModal(true)}
+        aria-label="New task"
+        className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl active:scale-95 transition flex items-center justify-center"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </button>
+
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-            <h3 className="text-2xl font-bold text-black mb-6">Create New Task</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl sm:text-2xl font-bold text-black mb-6 tracking-tight">
+              Create New Task
+            </h3>
 
             <form onSubmit={createTask} className="space-y-4">
               <div>

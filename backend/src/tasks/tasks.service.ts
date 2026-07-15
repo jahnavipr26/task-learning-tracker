@@ -4,9 +4,12 @@ import { tasks } from '../db/schema';
 import { eq, and, ilike, SQL } from 'drizzle-orm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { ActivityService } from '../activity/activity.service';
 
 @Injectable()
 export class TasksService {
+  constructor(private activityService: ActivityService) {}
+
   async create(userId: string, dto: CreateTaskDto) {
     const result = await db
       .insert(tasks)
@@ -19,6 +22,19 @@ export class TasksService {
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
       })
       .returning();
+
+    // Log activity
+    try {
+      await this.activityService.logActivity(
+        userId,
+        'Task Created',
+        'Task',
+        result[0].id,
+      );
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
+
     return result[0];
   }
 
@@ -82,6 +98,18 @@ export class TasksService {
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
       .returning();
 
+    // Log activity
+    try {
+      await this.activityService.logActivity(
+        userId,
+        'Task Updated',
+        'Task',
+        id,
+      );
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
+
     return result[0];
   }
 
@@ -91,6 +119,18 @@ export class TasksService {
     await db
       .delete(tasks)
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+
+    // Log activity
+    try {
+      await this.activityService.logActivity(
+        userId,
+        'Task Deleted',
+        'Task',
+        id,
+      );
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
 
     return { message: 'Task deleted successfully' };
   }
@@ -107,6 +147,18 @@ export class TasksService {
       })
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
       .returning();
+
+    // Log activity
+    try {
+      await this.activityService.logActivity(
+        userId,
+        'Task Completed',
+        'Task',
+        id,
+      );
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
 
     return result[0];
   }
